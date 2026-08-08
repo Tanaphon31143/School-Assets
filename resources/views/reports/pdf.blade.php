@@ -1,0 +1,1 @@
+<h1>รายงานครุภัณฑ์</h1><table width="100%" border="1" cellpadding="5"><tr><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>สถานะ</th></tr>@foreach($equipment as $e)<tr><td>{{ $e->code }}</td><td>{{ $e->name }}</td><td>{{ $e->category?->name }}</td><td>{{ $e->status }}</td></tr>@endforeach</table>

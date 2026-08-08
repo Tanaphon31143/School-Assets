@@ -1,0 +1,7 @@
+<?php
+namespace App\Http\Controllers;
+use App\Http\Requests\StoreMaintenanceRequest;
+use App\Models\Equipment;
+use App\Models\EquipmentMaintenance;
+use Illuminate\Http\Request;
+class MaintenanceController extends Controller { public function index(Request $request){$maintenances=EquipmentMaintenance::with(['equipment','reporter'])->when(!$request->user()->hasRole('admin'),fn($q)=>$q->where('reported_by',$request->user()->id))->latest()->paginate(15);return view('maintenance.index',compact('maintenances'));} public function store(StoreMaintenanceRequest $request){$data=$request->validated();$data['reported_by']=$request->user()->id;$data['reported_date']=now();EquipmentMaintenance::create($data);Equipment::whereKey($data['equipment_id'])->update(['status'=>'maintenance']);return back()->with('success','แจ้งซ่อมเรียบร้อยแล้ว');} public function update(Request $request,EquipmentMaintenance $maintenance){abort_unless($request->user()->hasRole('admin'),403);$data=$request->validate(['status'=>'required|in:reported,in_progress,completed,cannot_repair','repair_cost'=>'nullable|numeric|min:0','notes'=>'nullable|string']);$maintenance->update($data+($data['status']==='completed'?['repaired_date'=>now()]:[]));if(in_array($data['status'],['completed','cannot_repair']))$maintenance->equipment->update(['status'=>$data['status']==='completed'?'available':'damaged']);return back()->with('success','อัปเดตสถานะงานซ่อมแล้ว');} }

@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Requests;
+use Illuminate\Foundation\Http\FormRequest;
+class StoreEquipmentRequest extends FormRequest { public function authorize():bool{return $this->user()?->hasRole('admin')??false;} public function rules():array{return ['code'=>'required|string|max:100|unique:equipment,code','name'=>'required|string|max:255','equipment_category_id'=>'required|exists:equipment_categories,id','equipment_location_id'=>'nullable|exists:equipment_locations,id','brand'=>'nullable|max:255','model'=>'nullable|max:255','serial_number'=>'nullable|max:255','purchase_date'=>'nullable|date','purchase_price'=>'nullable|numeric|min:0','quantity'=>'required|integer|min:1','unit'=>'required|max:50','status'=>'required|in:available,borrowed,maintenance,damaged,disposed','condition'=>'required|in:new,good,fair,poor','warranty_expire_date'=>'nullable|date','notes'=>'nullable|string','image'=>'nullable|image|max:2048'];} }

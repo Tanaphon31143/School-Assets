@@ -1,0 +1,1 @@
+<span {{ $attributes->merge(['class' => 'inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold tracking-wide text-white shadow-sm']) }} aria-label="School Assets">SA</span>
