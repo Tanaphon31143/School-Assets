@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { db } from "@/lib/db"; import { currentUser } from "@/lib/auth";
+type C={params:Promise<{id:string}>}; export async function PATCH(_:Request,{params}:C){const u=await currentUser();if(!u)return NextResponse.json({error:"กรุณาเข้าสู่ระบบ"},{status:401});const{id}=await params;await db.query("UPDATE notifications SET read_at=NOW() WHERE id=? AND notifiable_id=?",[id,u.id]);return NextResponse.json({ok:true})}

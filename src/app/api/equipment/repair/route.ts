@@ -1,0 +1,3 @@
+import{NextResponse}from"next/server";import{db}from"@/lib/db";import{currentUser}from"@/lib/auth";
+const names=["คอมพิวเตอร์ตั้งโต๊ะ","โน้ตบุ๊ค","เครื่องพิมพ์","ลูกฟุตบอล","โต๊ะเรียน","เก้าอี้นักเรียน","กล้องจุลทรรศน์","ชุดทดลองไฟฟ้า","โปรเจกเตอร์","กระดานไวท์บอร์ด","คอมพิวเตอร์ตั้งโต๊ะ","โน้ตบุ๊ค","เครื่องพิมพ์","ลูกฟุตบอล","โต๊ะเรียน","เก้าอี้นักเรียน","กล้องจุลทรรศน์","ชุดทดลองไฟฟ้า","โปรเจกเตอร์","กระดานไวท์บอร์ด"];
+export async function POST(){const u=await currentUser();if(!u||u.role!=="admin")return NextResponse.json({error:"ไม่มีสิทธิ์"},{status:403});for(let i=0;i<names.length;i++)await db.query("UPDATE equipment SET name=? WHERE code=?",[names[i],`EQ-${String(i+1).padStart(4,"0")}`]);return NextResponse.json({ok:true});}

@@ -1,0 +1,23 @@
+{
+  "openapi": "3.0.3",
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "description": "Enter your public key for the username field and private key for the password field",
+        "scheme": "basic",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "ระบบจัดการครุภัณฑ์โรงเรียน",
+    "title": "school-asset-management",
+    "version": "1.0.0"
+  },
+  "paths": {},
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ]
+}
