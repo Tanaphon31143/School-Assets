@@ -1,6 +1,13 @@
 import mysql from "mysql2/promise";
 
 const globalForDb = globalThis as unknown as { dbPool?: mysql.Pool };
+
+if (!process.env.DATABASE_URL) {
+  console.error("[DB] ❌ DATABASE_URL is not set!");
+} else {
+  console.log("[DB] ✅ DATABASE_URL found, connecting to database...");
+}
+
 const connectionUrl = new URL(process.env.DATABASE_URL ?? "");
 
 export const db = globalForDb.dbPool ?? mysql.createPool({
