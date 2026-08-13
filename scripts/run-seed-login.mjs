@@ -9,3 +9,5 @@ const sql = fs.readFileSync("scripts/seed-login-users.sql", "utf8").replace(/--.
 for (const statement of sql.split(";").map((x) => x.trim()).filter(Boolean)) await db.query(statement);
 console.log("Login accounts seeded successfully");
 await db.end();
+
+//test
