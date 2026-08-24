@@ -1,1 +1,101 @@
-.heading{align-items:center;border-bottom:1px solid #e8edf4;padding-bottom:24px}.heading h1{font-size:20px;margin:0}.readAll{border:0;background:transparent;color:#1769df;font:inherit;font-size:13px;cursor:pointer}.list{width:min(740px,100%);margin:32px auto;background:#fff;border:1px solid #e1e8f1;border-radius:5px;overflow:hidden;box-shadow:0 2px 6px rgba(39,69,110,.05)}.item{display:flex;justify-content:space-between;gap:18px;padding:18px 16px;border-bottom:1px solid #e8edf4;min-height:70px}.item:last-child{border-bottom:0}.unread{background:#eef6ff}.item b,.item small,.item p{display:block}.item b{font-size:13px;color:#102c52}.item small{font-size:11px;color:#71809a;margin-top:3px}.item p{font-size:12px;color:#536b89;margin:4px 0 0}.markRead,.read{align-self:flex-start;border:0;background:transparent;color:#1769df;font:inherit;font-size:12px;white-space:nowrap;cursor:pointer}.read{cursor:default}.empty{padding:24px 16px;color:#71809a;font-size:13px}@media(max-width:600px){.heading{display:flex}.item{padding:15px 12px}}
+.heading {
+    align-items: center;
+    border-bottom: 1px solid #e8edf4;
+    padding-bottom: 24px
+}
+
+.heading h1 {
+    font-size: 20px;
+    margin: 0
+}
+
+.readAll {
+    border: 0;
+    background: transparent;
+    color: #1769df;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer
+}
+
+.list {
+    width: min(740px, 100%);
+    margin: 32px auto;
+    background: #fff;
+    border: 1px solid #e1e8f1;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(39, 69, 110, .05)
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 16px;
+    border-bottom: 1px solid #e8edf4;
+    min-height: 70px
+}
+
+.item:last-child {
+    border-bottom: 0
+}
+
+.unread {
+    background: #eef6ff
+}
+
+.item b,
+.item small,
+.item p {
+    display: block
+}
+
+.item b {
+    font-size: 13px;
+    color: #102c52
+}
+
+.item small {
+    font-size: 11px;
+    color: #71809a;
+    margin-top: 3px
+}
+
+.item p {
+    font-size: 12px;
+    color: #536b89;
+    margin: 4px 0 0
+}
+
+.markRead,
+.read {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: #1769df;
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer
+}
+
+.read {
+    cursor: default
+}
+
+.empty {
+    padding: 24px 16px;
+    color: #71809a;
+    font-size: 13px
+}
+
+@media(max-width:600px) {
+    .heading {
+        display: flex
+    }
+
+    .item {
+        padding: 15px 12px
+    }
+}
