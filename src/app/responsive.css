@@ -80,6 +80,19 @@ input, select, textarea { border: 1px solid var(--line); border-radius: 8px; pad
 .summary-card i { display:block; height:5px; border-radius:5px; margin-top:16px; background:#e9eef5; }
 .summary-card.blue i { background:#3f83f8; }.summary-card.green i { background:#19b77b; }.summary-card.orange i { background:#f59e0b; }.summary-card.red i { background:#ef476f; }
 .dashboard-grid { display:grid; grid-template-columns:2fr 1fr; gap:22px; margin-top:22px; }
+.status-chart { display:flex; align-items:center; gap:30px; min-height:184px; padding:18px 4px 2px; }
+.donut-chart { width:170px; height:170px; flex:0 0 170px; position:relative; display:grid; place-items:center; }
+.donut-chart svg { width:100%; height:100%; transform:rotate(-90deg); }
+.donut-chart circle { transition:stroke-dasharray .3s ease; }
+.donut-track { stroke:#edf1f6; }
+.donut-value { position:absolute; display:grid; place-items:center; line-height:1.15; }
+.donut-value strong { color:#102c52; font-size:29px; }
+.donut-value span { color:#8190a8; font-size:12px; margin-top:3px; }
+.status-legend { flex:1; display:grid; gap:14px; min-width:0; }
+.status-legend-item { display:grid; grid-template-columns:10px minmax(0,1fr) auto auto; align-items:center; column-gap:9px; color:#50627d; font-size:13px; }
+.status-dot { width:9px; height:9px; border-radius:50%; }
+.status-legend-item b { color:#17365f; font-size:15px; }
+.status-legend-item small { color:#93a0b2; min-width:35px; text-align:right; }
 .status-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:24px; }
 .status-box { padding:16px; border-radius:12px; }.status-box b { display:block; font-size:25px; margin-top:8px; }.status-box.blue{background:#eef5ff;color:#1553b7}.status-box.green{background:#e9fbf3;color:#08764f}.status-box.orange{background:#fff8e6;color:#a45b00}.status-box.red{background:#fff0f3;color:#c62f52}
 .shortcut-panel .shortcut { display:flex; justify-content:space-between; width:100%; border:0; background:#f7f9fc; border-radius:10px; padding:13px 15px; margin-top:10px; color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
@@ -89,6 +102,7 @@ input, select, textarea { border: 1px solid var(--line); border-radius: 8px; pad
 .quick-link { display:flex; justify-content:space-between; border:1px solid var(--line); background:#fff; border-radius:10px; padding:16px; color:var(--ink); font:inherit; cursor:pointer; text-align:left; }
 .quick-link:hover { border-color:#8bb6fa; background:#f7fbff; color:#1769df; }
 @media (max-width:700px) { .quick-links { grid-template-columns:repeat(2,1fr); } .embedded-page { min-height:650px; } }
+@media (max-width:480px) { .status-chart { gap:18px; align-items:flex-start; } .donut-chart { width:130px; height:130px; flex-basis:130px; } .donut-value strong { font-size:24px; } .status-legend { gap:11px; } .status-legend-item { column-gap:6px; font-size:12px; } }
 .card form > .primary { margin-top: 4px; }
 @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; max-width: none; } }
 input:focus, select:focus, textarea:focus { outline: none; border-color: #78aaf7; box-shadow: 0 0 0 3px rgba(45, 127, 249, .12); }

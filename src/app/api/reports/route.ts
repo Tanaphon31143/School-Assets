@@ -1,1 +1,17 @@
-import{NextResponse}from"next/server";import{db}from"@/lib/db";import{currentUser}from"@/lib/auth";export async function GET(){const u=await currentUser();if(!u||!['admin','teacher'].includes(u.role))return NextResponse.json({error:"ไม่มีสิทธิ์"},{status:403});const[[summary],[byStatus],[byCategory],[borrowings],[maintenance]]=await Promise.all([db.query("SELECT COUNT(*) AS items,COALESCE(SUM(quantity),0) AS quantity,COALESCE(SUM(purchase_price*quantity),0) AS value FROM equipment WHERE status <> 'disposed'"),db.query("SELECT status,COUNT(*) AS total FROM equipment GROUP BY status"),db.query("SELECT c.name,COUNT(e.id) AS total FROM equipment_categories c LEFT JOIN equipment e ON e.equipment_category_id=c.id GROUP BY c.id,c.name ORDER BY total DESC"),db.query("SELECT status,COUNT(*) AS total FROM equipment_borrowings GROUP BY status"),db.query("SELECT status,COUNT(*) AS total,COALESCE(SUM(repair_cost),0) AS repair_cost FROM equipment_maintenances GROUP BY status")]);return NextResponse.json({summary:(summary as Record<string,unknown>[])[0],byStatus,byCategory,borrowings,maintenance})}
+import{NextResponse}from"next/server";
+import{db}from"@/lib/db";
+import{currentUser}from"@/lib/auth";
+export async function GET(){const u=await currentUser();
+    if(!u||!['admin','teacher'].includes(u.role))return NextResponse.json({error:"ไม่มีสิทธิ์"},{status:403});
+    const[
+        [summary],
+        [byStatus],
+        [byCategory],
+        [borrowings],
+        [maintenance]
+    ]=await Promise.all([db.query("SELECT COUNT(*) AS items,COALESCE(SUM(quantity),0) AS quantity,COALESCE(SUM(purchase_price*quantity),0) AS value FROM equipment WHERE status <> 'disposed'"),
+        db.query("SELECT status,COALESCE(SUM(quantity),0) AS total FROM equipment WHERE status <> 'disposed' GROUP BY status"),
+        db.query("SELECT c.name,COALESCE(SUM(e.quantity),0) AS total FROM equipment_categories c LEFT JOIN equipment e ON e.equipment_category_id=c.id AND e.status <> 'disposed' GROUP BY c.id,c.name ORDER BY total DESC, c.name ASC"),
+        db.query("SELECT status,COUNT(*) AS total FROM equipment_borrowings GROUP BY status"),
+        db.query("SELECT status,COUNT(*) AS total,COALESCE(SUM(repair_cost),0) AS repair_cost FROM equipment_maintenances GROUP BY status")]);
+        return NextResponse.json({summary:(summary as Record<string,unknown>[])[0],byStatus,byCategory,borrowings,maintenance})}
