@@ -35,7 +35,6 @@ h1 { letter-spacing: 0 !important; line-height: 1.35; }
   font-family: var(--font-ibm-plex-sans-thai), Arial, sans-serif !important;
 }
 
-.swal2-icon { width: 72px !important; height: 72px !important; margin: 4px auto 14px !important; }
 .swal2-title { font-size: 23px !important; margin: 0 !important; }
 .swal2-html-container { font-size: 14px !important; margin: 8px 0 0 !important; }
 .swal2-actions { margin: 16px auto 0 !important; }

@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     const user = (rows as { id: number; name: string; email: string; password: string; role: string }[])[0];
     if (!user || !(await bcrypt.compare(password, user.password))) return NextResponse.json({ error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" }, { status: 401 });
 
+    await db.query("UPDATE users SET status='active', updated_at=NOW() WHERE id=?", [user.id]);
     const response = NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     response.cookies.set(cookieName, createSession({ id: user.id, name: user.name, email: user.email, role: user.role }), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 8 });
     console.log("[Login] ✅ Login success for:", email);

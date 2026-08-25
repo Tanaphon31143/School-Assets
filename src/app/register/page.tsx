@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import styles from "../login/login.module.css";
 
 export default function RegisterPage() {
@@ -11,14 +13,19 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [role, setRole] = useState<"teacher" | "student">("student");
   const [loading, setLoading] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
     if (password !== confirmPassword) {
-      setError("รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน");
+      await Swal.fire({
+        icon: "warning",
+        title: "รหัสผ่านไม่ตรงกัน",
+        text: "กรุณากรอกรหัสผ่านและยืนยันรหัสผ่านให้ตรงกัน",
+        confirmButtonText: "แก้ไข",
+        confirmButtonColor: "#2864e8",
+      });
       return;
     }
 
@@ -27,13 +34,29 @@ export default function RegisterPage() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "สมัครใช้งานไม่สำเร็จ");
+      await Swal.fire({
+        icon: "success",
+        title: "สมัครใช้งานเรียบร้อย",
+        text: "บัญชีของคุณถูกสร้างแล้ว กรุณาเข้าสู่ระบบเพื่อเริ่มใช้งาน",
+        confirmButtonText: "ไปหน้าเข้าสู่ระบบ",
+        confirmButtonColor: "#2864e8",
+        timer: 2500,
+        timerProgressBar: true,
+      });
       router.push("/login?registered=1");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "สมัครใช้งานไม่สำเร็จ");
+      const message = submitError instanceof Error ? submitError.message : "สมัครใช้งานไม่สำเร็จ";
+      await Swal.fire({
+        icon: "error",
+        title: "สมัครใช้งานไม่สำเร็จ",
+        text: message,
+        confirmButtonText: "ลองอีกครั้ง",
+        confirmButtonColor: "#2864e8",
+      });
     } finally {
       setLoading(false);
     }
@@ -47,9 +70,21 @@ export default function RegisterPage() {
       <p className={styles.subtitle}>เริ่มต้นใช้งานระบบจัดการครุภัณฑ์</p>
       <label>ชื่อผู้ใช้งาน<input value={name} onChange={(event) => setName(event.target.value)} required autoFocus minLength={2} /></label>
       <label>อีเมล<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+      <fieldset className={styles.roleField}>
+        <legend>สมัครเป็น</legend>
+        <div className={styles.roleOptions}>
+          <label className={styles.roleOption}>
+            <input type="radio" name="role" value="student" checked={role === "student"} onChange={() => setRole("student")} />
+            นักเรียน
+          </label>
+          <label className={styles.roleOption}>
+            <input type="radio" name="role" value="teacher" checked={role === "teacher"} onChange={() => setRole("teacher")} />
+            ครู
+          </label>
+        </div>
+      </fieldset>
       <label>รหัสผ่าน<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label>
       <label>ยืนยันรหัสผ่าน<input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} /></label>
-      {error && <p className={styles.error}>{error}</p>}
       <button className={styles.submit} disabled={loading}>{loading ? "กำลังสมัครใช้งาน…" : "สมัครใช้งาน"}</button>
       <p className={styles.register}>มีบัญชีอยู่แล้ว? <Link href="/login" className={styles.link}>เข้าสู่ระบบ</Link></p>
     </form>

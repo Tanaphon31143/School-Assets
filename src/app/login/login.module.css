@@ -97,6 +97,52 @@
     box-shadow: 0 0 0 3px rgba(40, 100, 232, 0.12);
 }
 
+.roleField {
+    border: 0;
+    padding: 0;
+    margin: 12px 0 0;
+}
+
+.roleField legend {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0;
+}
+
+.roleOptions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.card .roleOption {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    margin: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.card .roleOption:has(input:checked) {
+    border-color: #2864e8;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.card .roleOption input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #2864e8;
+}
+
 .options {
     display: flex;
     justify-content: space-between;
