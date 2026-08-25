@@ -38,6 +38,15 @@
     align-items: center
 }
 
+.headerActions > :global(.primary),
+.filters > :global(.primary) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
 .section {
     margin-top: 28px
 }
@@ -61,6 +70,10 @@
     padding: 0 16px;
     background: #fff;
     color: #60718b
+}
+
+.filters > :global(.primary) {
+    min-width: 82px;
 }
 
 .table {
@@ -158,15 +171,26 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 12px;
-    margin-bottom: 14px
+    margin-bottom: 14px;
+    width: 100%;
+    align-items: stretch
 }
 
 .formGrid input,
 .formGrid select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 44px;
     border: 1px solid #e1e8f1;
     border-radius: 8px;
     padding: 10px;
     background: white
+}
+
+.form > :global(.primary) {
+    min-width: 102px;
+    min-height: 44px;
 }
 
 .message {
@@ -202,5 +226,10 @@
 
     .formGrid {
         grid-template-columns: 1fr
+    }
+
+    .formGrid input,
+    .formGrid select {
+        width: 100%;
     }
 }
