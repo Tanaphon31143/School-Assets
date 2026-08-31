@@ -1,102 +1,270 @@
 "use client";
-
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
+import { Toaster, toast } from "sonner";
 import styles from "./borrowings.module.css";
-
-type Item = Record<string, unknown>;
-const labels: Record<string, string> = { pending: "รออนุมัติ", approved: "อนุมัติแล้ว", borrowed: "กำลังยืม", returned: "คืนแล้ว", rejected: "ไม่อนุมัติ" };
-
-export default function Borrowings() {
-  const [data, setData] = useState<Item[]>([]), [equipment, setEquipment] = useState<Item[]>([]);
-  const [role, setRole] = useState(""), [show, setShow] = useState(false), [filter, setFilter] = useState("all"), [message, setMessage] = useState("");
-  const load = () => fetch("/api/borrowings", { cache: "no-store" }).then(r => r.json()).then(x => Array.isArray(x) && setData(x));
-  useEffect(() => { load(); fetch("/api/equipment").then(r => r.json()).then(setEquipment); fetch("/api/auth/me").then(r => r.json()).then(x => setRole(x.user?.role ?? "")); }, []);
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const response = await fetch("/api/borrowings",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(Object.fromEntries(new FormData(event.currentTarget)))
-      });
-    setMessage(response.ok ? "ส่งคำขอยืมแล้ว" : "ไม่สามารถส่งคำขอได้");
-    if (response.ok) { setShow(false); load(); }
+import type { Borrowing, BorrowingSummary } from "@/lib/borrowing-types";
+import { isOverdue, urgency } from "@/lib/borrowing-date";
+import { StatusSummary } from "@/components/borrowings/StatusSummary";
+import { RequestCard } from "@/components/borrowings/RequestCard";
+import { DetailModal } from "@/components/borrowings/DetailModal";
+import { DateInputThai } from "@/components/borrowings/DateInputThai";
+import { AddBorrowRequestModal } from "@/components/borrowings/AddBorrowRequestModal";
+import { CreateBorrowRequestModal } from "@/components/borrowings/CreateBorrowRequestModal";
+type Equipment = { id: number; code: string; name: string; status: string };
+const fetcher = async <T,>(url: string): Promise<T> => {
+  const r = await fetch(url, { cache: "no-store" }),
+    b = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(b.error ?? "ไม่สามารถโหลดข้อมูลได้");
+  return b as T;
+};
+const rank = (i: Borrowing) =>
+  ({ overdue: 0, pending: 1, soon: 2, normal: 3, returned: 4 })[urgency(i)] ??
+  5;
+export default function BorrowReturnPage() {
+  const {
+    data: items = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<Borrowing[]>("/api/borrowings", fetcher, {
+    refreshInterval: 60000,
+    revalidateOnFocus: true,
+  });
+  const { data: summary, mutate: mutateSummary } = useSWR<BorrowingSummary>(
+    "/api/borrowings/summary",
+    fetcher,
+    { refreshInterval: 60000 },
+  );
+  const { data: equipment = [] } = useSWR<Equipment[]>(
+    "/api/equipment",
+    fetcher,
+  );
+  const [role, setRole] = useState(""),
+    [isModalOpen, setIsModalOpen] = useState(false),
+    [filter, setFilter] = useState("all"),
+    [search, setSearch] = useState(""),
+    [showCreate, setShowCreate] = useState(false),
+    [selected, setSelected] = useState<Borrowing | null>(null),
+    [detail, setDetail] = useState<Borrowing | null>(null),
+    [detailLoading, setDetailLoading] = useState(false),
+    [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    void fetcher<{ user?: { role?: string } }>("/api/auth/me")
+      .then((x) => setRole(x.user?.role ?? ""))
+      .catch(() => setRole(""));
+  }, []);
+  const visible = useMemo(
+    () =>
+      items
+        .filter((i) => {
+          const overdue = isOverdue(i),
+            status =
+              filter === "all" ||
+              (filter === "overdue"
+                ? overdue
+                : i.status === filter ||
+                  (filter === "borrowed" && i.status === "approved")),
+            q = search.trim().toLocaleLowerCase();
+          return (
+            status &&
+            (!q ||
+              `${i.borrower_name} ${i.equipment_name} ${i.equipment_code}`
+                .toLocaleLowerCase()
+                .includes(q))
+          );
+        })
+        .sort(
+          (a, b) =>
+            rank(a) - rank(b) ||
+            new Date(a.expected_return_date).getTime() -
+              new Date(b.expected_return_date).getTime(),
+        ),
+    [items, filter, search],
+  );
+  const refresh = () => Promise.all([mutate(), mutateSummary()]);
+  async function openDetail(i: Borrowing) {
+    setSelected(i);
+    setDetail(i);
+    setDetailLoading(true);
+    try {
+      setDetail(await fetcher<Borrowing>(`/api/borrow-requests/${i.id}`));
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "ไม่สามารถโหลดรายละเอียดได้",
+      );
+    } finally {
+      setDetailLoading(false);
+    }
   }
-  async function action(id: unknown, actionName: string) {
-    await fetch(`/api/borrowings/${id}`,
-      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: actionName }) });
-    load();
+  async function runAction(
+    i: Borrowing,
+    a: "approve" | "reject" | "return" | "remind",
+  ) {
+    const text = {
+        approve: "อนุมัติคำขอแล้ว",
+        reject: "ปฏิเสธคำขอแล้ว",
+        return: "รับคืนครุภัณฑ์แล้ว",
+        remind: "ส่งการแจ้งเตือนแล้ว",
+      },
+      prior = items;
+    if (a !== "remind")
+      await mutate(
+        items.map((x) =>
+          x.id === i.id
+            ? {
+                ...x,
+                status:
+                  a === "approve"
+                    ? "approved"
+                    : a === "reject"
+                      ? "rejected"
+                      : "returned",
+                actual_return_date:
+                  a === "return"
+                    ? new Date().toISOString()
+                    : x.actual_return_date,
+              }
+            : x,
+        ),
+        false,
+      );
+    try {
+      const r = await fetch(`/api/borrowings/${i.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: a }),
+        }),
+        b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b.error ?? "ทำรายการไม่สำเร็จ");
+      toast.success(text[a]);
+      setSelected(null);
+      setDetail(null);
+      await refresh();
+    } catch (e) {
+      await mutate(prior, false);
+      toast.error(e instanceof Error ? e.message : "ทำรายการไม่สำเร็จ");
+    }
   }
-  const visible = data.filter(item => filter === "all" || item.status === filter);
-  return <main className={styles.page}>
-    <header className={styles.header}>
-      <div>
-        <p className={styles.eyebrow}>การใช้งานครุภัณฑ์</p>
-        <h1>รายการยืม–คืน</h1>
-        <p className={styles.subtitle}>ตรวจสอบสถานะคำขอยืมและการคืนครุภัณฑ์</p>
-      </div>
-      <div className={styles.headerActions}>
-        <button className="primary" onClick={() => setShow(!show)}>＋ สร้างคำขอยืม</button>
-        <a className="primary" href="/">กลับ Dashboard</a>
-      </div>
-    </header>
-    {show && <form className={`card ${styles.form}`} onSubmit={submit}>
-      <h2>สร้างคำขอยืม</h2>
-      <div className={styles.formGrid}><div>
-        <select name="equipment_id" required><option value="">เลือกครุภัณฑ์</option>
-          {equipment
-            .filter(x => x.status === "available")
-            .map(x => <option key={String(x.id)} value={String(x.id)}>{String(x.code)} - {String(x.name)}
-            </option>)}
-        </select>
-      </div><div>
-          <input type="date" name="expected_return_date" required /></div>
+  async function createRequest(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    setSubmitting(true);
+    try {
+      const r = await fetch("/api/borrowings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        }),
+        b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b.error ?? "ส่งคำขอยืมไม่สำเร็จ");
+      form.reset();
+      setShowCreate(false);
+      toast.success("ส่งคำขอยืมเรียบร้อยแล้ว");
+      await refresh();
+    } catch (x) {
+      toast.error(x instanceof Error ? x.message : "ส่งคำขอยืมไม่สำเร็จ");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+  const canManage = role === "admin";
+  return (
+    <main className={`content ${styles.page}`}>
+      <Toaster position="top-right" richColors />
+      <header className={styles.header}>
         <div>
-          <input name="purpose" placeholder="วัตถุประสงค์" required /></div>
-      </div>
-      <button className="primary">ส่งคำขอ</button>
-      {message && <span className={styles.message}>{message}</span>}
-    </form>}
-    <section className={styles.section}>
-      <div className={styles.sectionHeading}>
-        <div>
-          <h2>ติดตามรายการยืมครุภัณฑ์</h2>
-          <p>ตรวจสอบสถานะคำขอและการคืนครุภัณฑ์</p>
+          <p className="eyebrow">การใช้งานครุภัณฑ์</p>
+          <h1>รายการยืม-คืน</h1>
+          <p className="sub">
+            ติดตามคำขอยืม กำหนดคืน และสถานะครุภัณฑ์ของโรงเรียน
+          </p>
         </div>
-        <div className={styles.filters}>
-          <select value={filter} onChange={e => setFilter(e.target.value)}>
-            <option value="all">ทุกสถานะ</option>
-            <option value="pending">รออนุมัติ</option>
-            <option value="borrowed">กำลังยืม</option>
-            <option value="returned">คืนแล้ว</option>
+        <button className="primary" onClick={() => setIsModalOpen(true)}>
+          ＋ สร้างคำขอยืม
+        </button>
+      </header>
+      {showCreate && (
+        <form className={styles.createForm} onSubmit={createRequest}>
+          <select name="equipment_id" required defaultValue="">
+            <option value="" disabled>
+              เลือกครุภัณฑ์
+            </option>
+            {equipment
+              .filter((x) => x.status === "available")
+              .map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.code} — {x.name}
+                </option>
+              ))}
           </select>
-          <button className="primary">กรอง</button>
-        </div>
-      </div>
-      <div className={styles.table}>
-        <div className={styles.tableHead}>
-          <span>ครุภัณฑ์</span>
-          <span>ผู้ยืม</span>
-          <span>กำหนดคืน</span>
-          <span>สถานะ</span>
-          <span>ดำเนินการ</span></div>
-        {visible.length ? visible.map(item => <div className={styles.tableRow} key={String(item.id)}>
+          <input
+            type="date"
+            name="expected_return_date"
+            required
+            aria-label="กำหนดคืน"
+          />
+          <input name="purpose" required placeholder="วัตถุประสงค์การยืม" />
+          <button className="primary" disabled={submitting}>
+            {submitting ? "กำลังส่ง..." : "ส่งคำขอ"}
+          </button>
+        </form>
+      )}
+      <StatusSummary summary={summary} />
+      <section className={styles.tracking}>
+        <div className={styles.sectionHead}>
           <div>
-            <b>{String(item.equipment_name)}</b>
-            <small>{String(item.equipment_code)}</small>
+            <h2>ติดตามรายการยืมครุภัณฑ์</h2>
+            <p className="sub">เรียงรายการที่ต้องดำเนินการก่อนเสมอ</p>
           </div>
-          <span>{String(item.borrower_name)}</span>
-          <span>{String(item.expected_return_date)}</span>
-          <span>
-            <em className={`${styles.status} ${item.status === "returned" ? styles.success : styles.warning}`}>
-              {labels[String(item.status)] ?? String(item.status)}</em></span>
-          <div className={styles.actions}>
-            {role === "admin" && item.status === "pending" && <><button className={styles.approve} onClick={() => action(item.id, "approve")}>อนุมัติ</button>
-              <button className={styles.reject} onClick={() => action(item.id, "reject")}>ปฏิเสธ</button></>}
-            {["approved", "borrowed"].includes(String(item.status)) &&
-              <button className={styles.returnButton} onClick={() => action(item.id, "return")}>คืนครุภัณฑ์</button>}
+          <div className={styles.filters}>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              aria-label="กรองสถานะ"
+            >
+              <option value="all">ทุกสถานะ</option>
+              <option value="overdue">เลยกำหนด</option>
+              <option value="pending">รออนุมัติ</option>
+              <option value="borrowed">กำลังยืม</option>
+              <option value="returned">คืนแล้ว</option>
+            </select>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหาผู้ยืมหรือครุภัณฑ์"
+              aria-label="ค้นหารายการ"
+            />
           </div>
-        </div>) : <div className={styles.empty}>ยังไม่มีรายการยืม–คืน</div>}</div>
-    </section>
-  </main>;
+        </div>
+        <div className={styles.timeline}>
+          {isLoading && <p className={styles.empty}>กำลังโหลดรายการ...</p>}
+          {error && <p className={styles.error}>{error.message}</p>}
+          {!isLoading && !error && !visible.length && (
+            <p className={styles.empty}>ไม่พบรายการที่ตรงกับเงื่อนไข</p>
+          )}
+          {visible.map((i) => (
+            <RequestCard
+              key={i.id}
+              item={i}
+              canManage={canManage}
+              onAction={runAction}
+              onDetail={openDetail}
+            />
+          ))}
+        </div>
+      </section>
+      <DetailModal
+        item={detail}
+        loading={detailLoading}
+        canManage={canManage}
+        onClose={() => {
+          setSelected(null);
+          setDetail(null);
+        }}
+        onAction={(a) => selected && runAction(selected, a)}
+      />
+      <CreateBorrowRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={() => { void refresh(); }} />
+    </main>
+  );
 }

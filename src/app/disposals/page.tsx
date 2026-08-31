@@ -1,5 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 type Item = Record<string, unknown>;
 
 export default function Disposals() {
@@ -17,9 +19,12 @@ export default function Disposals() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
+    const confirmation = await Swal.fire({ icon: "warning", title: "ยืนยันการตัดจำหน่าย?", text: "สถานะครุภัณฑ์จะเปลี่ยนเป็นจำหน่ายแล้ว", showCancelButton: true, confirmButtonText: "ยืนยันบันทึก", cancelButtonText: "ยกเลิก" });
+    if (!confirmation.isConfirmed) return;
     const response = await fetch("/api/disposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(form))) });
     setMessage(response.ok ? "บันทึกการตัดจำหน่ายแล้ว" : "บันทึกไม่สำเร็จ");
-    if (response.ok) { form.reset(); setShow(false); load(); }
+    if (response.ok) { form.reset(); setShow(false); load(); await Swal.fire({ icon: "success", title: "บันทึกการตัดจำหน่ายแล้ว", timer: 1400, showConfirmButton: false }); }
+    else await Swal.fire({ icon: "error", title: "บันทึกไม่สำเร็จ" });
   }
   return <main className="content">
     <header>
@@ -48,6 +53,7 @@ export default function Disposals() {
         <input name="notes" placeholder="หมายเหตุ" />
       </div>
       <button className="primary">บันทึก</button>{message && <span className="sub"> {message}</span>}
+      <button type="button" className="secondary-button" onClick={() => setShow(false)}>ยกเลิก</button>
     </form>}
     <div className="card">
       <div className="table">{data.map((x) => <div className="row" key={String(x.id)}>

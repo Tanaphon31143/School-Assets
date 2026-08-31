@@ -69,7 +69,7 @@ export default function RegisterPage() {
       <h1>สร้างบัญชีผู้ใช้งาน</h1>
       <p className={styles.subtitle}>เริ่มต้นใช้งานระบบจัดการครุภัณฑ์</p>
       <label>ชื่อผู้ใช้งาน<input value={name} onChange={(event) => setName(event.target.value)} required autoFocus minLength={2} /></label>
-      <label>อีเมล<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+      <label>อีเมล<input type="email" value={email} onChange={(event) => setEmail(event.target.value.replaceAll(",", "."))} required /></label>
       <fieldset className={styles.roleField}>
         <legend>สมัครเป็น</legend>
         <div className={styles.roleOptions}>

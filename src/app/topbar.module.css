@@ -18,6 +18,8 @@
 }
 
 .topProfile .avatar { width: 34px; height: 34px; }
+.profileAvatar { overflow: hidden; flex: 0 0 34px; }
+.profileAvatar img { width: 100%; height: 100%; object-fit: cover; }
 .topProfile > span { color: var(--muted); }
 
 .bottomProfile { position: relative; width: 100%; }

@@ -20,6 +20,9 @@ export async function PATCH(request: Request, { params }: Context) {
 export async function DELETE(_: Request, { params }: Context) {
   const actor = await admin(); if (!actor) return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
   const { id } = await params; if (Number(id) === actor.id) return NextResponse.json({ error: "ไม่สามารถลบบัญชีที่กำลังใช้งานได้" }, { status: 400 });
-  await db.query("DELETE FROM model_has_roles WHERE model_id=? AND model_type LIKE '%User'", [id]); await db.query("DELETE FROM users WHERE id=?", [id]);
+  const userId = Number(id); if (!Number.isInteger(userId) || userId < 1) return NextResponse.json({ error: "ไม่พบผู้ใช้งาน" }, { status: 404 });
+  const [result] = await db.query("UPDATE users SET name='ลบบัญชีแล้ว', email=CONCAT('deleted-', id, '@deleted.local'), password=?, status='deleted', updated_at=NOW() WHERE id=? AND status <> 'deleted'", [await bcrypt.hash(crypto.randomUUID(), 10), userId]);
+  if ((result as { affectedRows: number }).affectedRows === 0) return NextResponse.json({ error: "ไม่พบผู้ใช้งาน" }, { status: 404 });
+  await db.query("DELETE FROM model_has_roles WHERE model_id=? AND model_type LIKE '%User'", [userId]);
   return NextResponse.json({ ok: true });
 }

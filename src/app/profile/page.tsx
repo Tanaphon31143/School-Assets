@@ -1,31 +1,18 @@
 "use client";
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
+import styles from "./profile.module.css";
+type ProfileData = { name?: string; email?: string; phone?: string; address?: string; role?: string; avatar_url?: string | null };
 export default function Profile() {
-    const [d, setD] = useState<Record<string, string>>({});
-    const [msg, setMsg] = useState("");
-    useEffect(() => {
-        fetch("/api/profile").then(r => r.json()).then(setD)
-    }, []);
-    async function save(e: FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        const r = await fetch("/api/profile", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))
-        });
-        setMsg(r.ok ? "บันทึกแล้ว" : "บันทึกไม่สำเร็จ")
-    };
-    return <main className="content">
-        <header>
-            <h1>Profile</h1>
-            <a className="primary" href="/">กลับ Dashboard</a>
-        </header>
-        <form className="card" onSubmit={save}>
-            <input name="name" defaultValue={d.name} placeholder="ชื่อ" required />
-            <input name="email" type="email" defaultValue={d.email} placeholder="อีเมล" required />
-            <input name="password" type="password" placeholder="รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)" />
-            <button className="primary">บันทึก</button>
-            {msg && <span className="sub"> {msg}</span>}
-        </form>
-    </main>
+  const [profile, setProfile] = useState<ProfileData>({}); const [initialProfile, setInitialProfile] = useState<ProfileData>({}); const [currentPassword, setCurrentPassword] = useState(""); const [newPassword, setNewPassword] = useState(""); const [confirmPassword, setConfirmPassword] = useState(""); const [message, setMessage] = useState(""); const [saving, setSaving] = useState(false); const [uploading, setUploading] = useState(false); const [photoMenuOpen, setPhotoMenuOpen] = useState(false); const fileInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { fetch("/api/profile").then((r) => r.json()).then((data) => { if (data && !data.error) { setProfile(data); setInitialProfile(data); } }); }, []);
+  const update = (field: keyof ProfileData, value: string) => setProfile((current) => ({ ...current, [field]: value }));
+  async function cancel() { const confirmation = await Swal.fire({ icon: "warning", title: "ยกเลิกการแก้ไข?", text: "ข้อมูลที่ยังไม่ได้บันทึกจะหายไป", showCancelButton: true, confirmButtonText: "ยืนยันยกเลิก", cancelButtonText: "กลับไปแก้ไข" }); if (!confirmation.isConfirmed) return; setProfile(initialProfile); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setMessage(""); }
+  async function uploadAvatar(event: ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file) return; if (!["image/jpeg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024) { setMessage("เลือกรูป JPG หรือ PNG ขนาดไม่เกิน 5 MB"); event.target.value = ""; return; } setUploading(true); setMessage(""); const data = new FormData(); data.append("avatar", file); const response = await fetch("/api/profile/avatar", { method: "POST", body: data }); const result = await response.json().catch(() => ({})); setUploading(false); event.target.value = ""; if (!response.ok) { setMessage(String(result.error ?? "อัปโหลดรูปไม่สำเร็จ")); return; } setProfile((current) => ({ ...current, avatar_url: result.avatarUrl })); setInitialProfile((current) => ({ ...current, avatar_url: result.avatarUrl })); setPhotoMenuOpen(false); setMessage("เปลี่ยนรูปโปรไฟล์แล้ว"); }
+  async function removeAvatar() { if (!profile.avatar_url) return; setUploading(true); const response = await fetch("/api/profile/avatar", { method: "DELETE" }); setUploading(false); if (!response.ok) { setMessage("ลบรูปไม่สำเร็จ"); return; } setProfile((current) => ({ ...current, avatar_url: null })); setInitialProfile((current) => ({ ...current, avatar_url: null })); setPhotoMenuOpen(false); setMessage("ลบรูปโปรไฟล์แล้ว"); }
+  async function save(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (newPassword && newPassword !== confirmPassword) { setMessage("รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน"); return; } if (newPassword && !currentPassword) { setMessage("กรุณากรอกรหัสผ่านปัจจุบันก่อนเปลี่ยนรหัสผ่าน"); return; } const confirmation = await Swal.fire({ icon: "question", title: "ยืนยันการบันทึกข้อมูล?", showCancelButton: true, confirmButtonText: "บันทึก", cancelButtonText: "ยกเลิก" }); if (!confirmation.isConfirmed) return; setSaving(true); setMessage(""); const response = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...profile, currentPassword, password: newPassword }) }); const result = await response.json().catch(() => ({})); setSaving(false); if (!response.ok) { setMessage(String(result.error ?? "บันทึกไม่สำเร็จ")); await Swal.fire({ icon: "error", title: "บันทึกไม่สำเร็จ", text: String(result.error ?? "กรุณาลองใหม่") }); return; } setInitialProfile(profile); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); setMessage("บันทึกข้อมูลเรียบร้อยแล้ว"); await Swal.fire({ icon: "success", title: "บันทึกข้อมูลเรียบร้อยแล้ว", timer: 1200, showConfirmButton: false }); }
+  const initials = (profile.name ?? "ผ").trim().slice(0, 1); const username = profile.email?.split("@")[0] ?? "-"; const roleName: Record<string, string> = { admin: "ผู้ดูแลระบบ", teacher: "ครู", student: "นักเรียน", user: "ผู้ใช้งาน" }; const access = roleName[profile.role ?? "user"] ?? "ผู้ใช้งาน";
+  return <main className={`content ${styles.page}`}><header className={styles.header}><h1>Profile</h1><Link href="/" className="primary">กลับ Dashboard</Link></header><div className={styles.layout}><aside className={`card ${styles.identityCard}`}><div className={styles.avatarWrap}><button type="button" className={styles.avatar} disabled={uploading} onClick={() => setPhotoMenuOpen((open) => !open)} aria-label="จัดการรูปโปรไฟล์" title="คลิกเพื่อจัดการรูปโปรไฟล์">{profile.avatar_url ? <img src={profile.avatar_url} alt="รูปโปรไฟล์" /> : initials}</button><span className={styles.cameraIcon}>▣</span>{photoMenuOpen && <div className={styles.photoMenu}><div className={styles.photoPreview}>{profile.avatar_url ? <img src={profile.avatar_url} alt="รูปโปรไฟล์ปัจจุบัน" /> : initials}</div><b>รูปโปรไฟล์ปัจจุบัน</b><button type="button" disabled={uploading} onClick={() => fileInput.current?.click()}>{uploading ? "กำลังอัปโหลด..." : "อัปโหลดรูป"}</button><button type="button" disabled={uploading || !profile.avatar_url} onClick={removeAvatar}>ลบรูป</button></div>}</div><strong>{profile.name ?? "กำลังโหลด..."}</strong><p>{profile.email ?? ""}</p><input ref={fileInput} className={styles.fileInput} type="file" accept="image/jpeg,image/png" onChange={uploadAvatar} /><small>คลิกที่รูปเพื่อจัดการรูป · รองรับ JPG, PNG ขนาดไม่เกิน 5MB<br />แนะนำสัดส่วน 1:1</small><em className={styles.active}>● ใช้งานอยู่</em></aside><form onSubmit={save} className={styles.form}><section className={`card ${styles.section}`}><h2>ข้อมูลบัญชี</h2><p>ข้อมูลนี้ใช้แสดงตัวตนของคุณในระบบ</p><div className={styles.fields}><label>ชื่อ-นามสกุล <b>*</b><input value={profile.name ?? ""} onChange={(e) => update("name", e.target.value)} required /></label><label>ชื่อผู้ใช้ (username)<input value={username} disabled /><small>ไม่สามารถแก้ไขชื่อผู้ใช้ได้</small></label><label>อีเมล <b>*</b><input type="email" value={profile.email ?? ""} onChange={(e) => update("email", e.target.value)} required /></label><label>สิทธิ์การใช้งาน<input value={access} disabled /></label><label>เบอร์โทรศัพท์<input value={profile.phone ?? ""} onChange={(e) => update("phone", e.target.value)} placeholder="08X-XXX-XXXX" /></label><label>หน่วยงาน / แผนก<input value={profile.address ?? ""} onChange={(e) => update("address", e.target.value)} placeholder="เช่น ฝ่ายพัสดุ" /></label></div></section><section className={`card ${styles.section}`}><h2>เปลี่ยนรหัสผ่าน</h2><p>ต้องใช้รหัสผ่านปัจจุบันก่อนการเปลี่ยนรหัสผ่าน</p><label className={styles.fullField}>รหัสผ่านปัจจุบัน<input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="กรอกรหัสผ่านปัจจุบัน" /></label><div className={styles.fields}><label>รหัสผ่านใหม่<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={newPassword ? 8 : undefined} placeholder="อย่างน้อย 8 ตัวอักษร" /></label><label>ยืนยันรหัสผ่านใหม่<input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={confirmPassword ? 8 : undefined} placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง" /></label></div></section><div className={styles.actions}><span aria-live="polite">{message}</span><button type="button" className="secondary-button" onClick={cancel}>ยกเลิก</button><button className="primary" disabled={saving}>{saving ? "กำลังบันทึก..." : "บันทึก"}</button></div></form></div></main>;
 }

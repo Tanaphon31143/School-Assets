@@ -66,7 +66,6 @@
 }
 
 .submit {
-    margin-top: 18px;
     border: 0;
     border-radius: 4px;
     background: #2d68eb;
@@ -76,6 +75,22 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.actions .submit,
+.actions :global(.secondary-button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    height: 44px;
 }
 
 .submit:disabled {
@@ -90,5 +105,9 @@
 
     .card {
         padding: 20px 16px
+    }
+
+    .actions > * {
+        flex: 1;
     }
 }

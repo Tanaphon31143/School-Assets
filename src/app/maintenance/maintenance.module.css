@@ -1,0 +1,366 @@
+.page {
+  max-width: 1320px;
+}
+.header {
+  margin-bottom: 24px;
+}
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.summaryCard {
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(25, 54, 93, 0.05);
+}
+.summaryCard span,
+.summaryCard small {
+  display: block;
+  color: #6b7f9b;
+  font-size: 13px;
+}
+.summaryCard strong {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  margin: 14px 0 10px;
+}
+.pending {
+  border-left: 5px solid #ef476f;
+}
+.pending strong {
+  color: #d42d52;
+}
+.progress {
+  border-left: 5px solid #f59e0b;
+}
+.progress strong {
+  color: #b66a00;
+}
+.done {
+  border-left: 5px solid #19b77b;
+}
+.done strong {
+  color: #087a52;
+}
+.reportCard {
+  margin-bottom: 30px;
+}
+.reportCard h2,
+.recentHeading h2 {
+  margin-bottom: 5px;
+}
+.form {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 2fr auto;
+  gap: 14px;
+  align-items: end;
+  margin-top: 20px;
+}
+.form label {
+  display: grid;
+  gap: 7px;
+  color: #405878;
+  font-size: 13px;
+  font-weight: 600;
+}
+.form select,
+.form textarea,
+.statusControl select {
+  width: 100%;
+  border: 1px solid #dce5f2;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.form select {
+  height: 44px;
+  padding: 0 12px;
+}
+.form textarea {
+  min-height: 76px;
+  padding: 11px 12px;
+  resize: vertical;
+}
+.form button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+.recent {
+  padding-bottom: 20px;
+}
+.recentHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.list {
+  display: grid;
+  gap: 12px;
+}
+.repairCard {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) minmax(185px, auto);
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(25, 54, 93, 0.04);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #edf5ff;
+  color: #1e70df;
+  font-size: 21px;
+}
+.repairInfo {
+  min-width: 0;
+}
+.titleLine {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+}
+.titleLine h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.titleLine small,
+.repairInfo span {
+  color: #8190a8;
+  font-size: 12px;
+}
+.repairInfo p {
+  margin: 6px 0;
+  color: #405878;
+  font-size: 14px;
+}
+.statusControl {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 185px;
+}
+.badge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.statusreported {
+  color: #bf2947;
+  background: #fff0f3;
+}
+.statusin_progress {
+  color: #a96200;
+  background: #fff5df;
+}
+.statuscompleted {
+  color: #087a52;
+  background: #e7f8f0;
+}
+.statuscannot_repair {
+  color: #64748b;
+  background: #eef2f7;
+}
+.statusControl select {
+  height: 38px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.readOnly {
+  color: #8190a8;
+  font-size: 12px;
+}
+.empty,
+.error {
+  padding: 25px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: #8190a8;
+}
+.error {
+  color: #c9364d;
+  border-color: #fecdd3;
+  background: #fff7f8;
+}
+@media (max-width: 980px) {
+  .form {
+    grid-template-columns: 1fr 1fr;
+  }
+  .description {
+    grid-column: 1/-1;
+  }
+  .form button {
+    justify-self: start;
+  }
+  .repairCard {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+  .statusControl {
+    grid-column: 2;
+    justify-items: start;
+    align-items: center;
+    grid-template-columns: auto auto;
+  }
+  .statusControl select {
+    width: auto;
+    min-width: 180px;
+  }
+}
+@media (max-width: 650px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+  .form {
+    grid-template-columns: 1fr;
+  }
+  .description {
+    grid-column: auto;
+  }
+  .form button {
+    width: 100%;
+  }
+  .recentHeading {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .repairCard {
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+    padding: 15px;
+  }
+  .icon {
+    width: 42px;
+    height: 42px;
+  }
+  .statusControl {
+    grid-column: 1/-1;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+  .statusControl select {
+    width: 100%;
+  }
+  .titleLine {
+    flex-wrap: wrap;
+  }
+}
+.form {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto !important;
+}
+.form label {
+  min-width: 0;
+}
+.form textarea {
+  height: 44px !important;
+  min-height: 44px !important;
+  resize: none;
+}
+
+.customSelect {
+  position: relative;
+}
+.customSelect > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.selectTrigger {
+  display: flex;
+  width: 100%;
+  height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #dce5f2;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.selectTrigger:hover,
+.selectTriggerOpen {
+  border-color: #2563eb;
+}
+.selectTrigger:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  outline-offset: 1px;
+}
+.placeholder {
+  color: #405878;
+}
+.chevron {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+.chevronOpen {
+  transform: rotate(180deg);
+}
+.selectMenu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #dce5f2;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  scrollbar-width: thin;
+}
+.selectOption {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.selectOption:last-child {
+  border-bottom: 0;
+}
+.selectOption:hover,
+.selectOption:focus-visible,
+.selectOptionActive {
+  background: #eff6ff;
+  color: #2563eb;
+  outline: 0;
+}

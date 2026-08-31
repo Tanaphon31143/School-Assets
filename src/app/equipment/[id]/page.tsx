@@ -41,9 +41,12 @@ export default function EditEquipment() {
   if (isAdmin !== true) return <main className={styles.page} />;
 
   async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSaving(true);
-    const values = Object.fromEntries(new FormData(event.currentTarget)); delete values.image;
-    const response = await fetch(`/api/equipment/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
+    event.preventDefault();
+    const form = event.currentTarget;
+    const confirmation = await Swal.fire({ icon: "question", title: "ยืนยันการบันทึกการแก้ไข?", showCancelButton: true, confirmButtonText: "บันทึก", cancelButtonText: "ยกเลิก" });
+    if (!confirmation.isConfirmed) return;
+    setSaving(true);
+    const response = await fetch(`/api/equipment/${id}`, { method: "PATCH", body: new FormData(form) });
     setSaving(false);
     if (!response.ok) { const result = await response.json().catch(() => ({})); await Swal.fire({ icon: "error", title: "บันทึกไม่สำเร็จ", text: String(result.error ?? "กรุณาตรวจสอบข้อมูลแล้วลองใหม่") }); return; }
     await Swal.fire({ icon: "success", title: "บันทึกการแก้ไขแล้ว", timer: 1400, showConfirmButton: false });
@@ -59,7 +62,7 @@ export default function EditEquipment() {
     </header>
     <form className={styles.card} onSubmit={save}>
       <div className={styles.grid}>
-        <label>รหัสครุภัณฑ์<input name="code" defaultValue={String(item.code ?? "")} required /></label>
+        <label>รหัสครุภัณฑ์<input name="code" defaultValue={String(item.code ?? "")} readOnly aria-label="รหัสครุภัณฑ์ (กำหนดโดยระบบ)" /></label>
         <label>ชื่อครุภัณฑ์<input name="name" defaultValue={String(item.name ?? "")} required /></label>
         <label>ประเภท
           <select name="equipment_category_id" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} required>
@@ -102,7 +105,7 @@ export default function EditEquipment() {
       </div>
       <label>รูปภาพ<input type="file" name="image" accept="image/*" /></label>
       <label>หมายเหตุ<textarea name="notes" defaultValue={String(item.notes ?? "")} rows={3} /></label>
-      <button className={styles.submit} disabled={saving}>{saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}</button>
+      <div className={styles.actions}><button className={styles.submit} disabled={saving}>{saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}</button><button type="button" className="secondary-button" onClick={() => router.push("/equipment")}>ยกเลิก</button></div>
     </form>
   </main>;
 }

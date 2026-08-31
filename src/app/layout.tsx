@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import "./responsive.css";
 import "./font.css";
-
-const ibmPlexSansThai = IBM_Plex_Sans_Thai({
-  subsets: ["latin", "thai"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm-plex-sans-thai",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "School Assets",
@@ -18,10 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="th"
-      className={`${ibmPlexSansThai.variable} h-full antialiased`}
-    >
+    <html lang="th" className="h-full antialiased">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

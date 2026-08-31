@@ -7,14 +7,17 @@ export default function Categories() {
     useEffect(() => { load() }, []);
     async function add(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        const form = e.currentTarget;
+        const confirmation = await Swal.fire({ icon: "question", title: "ยืนยันการเพิ่มหมวดหมู่?", showCancelButton: true, confirmButtonText: "บันทึก", cancelButtonText: "ยกเลิก" });
+        if (!confirmation.isConfirmed) return;
         const r = await fetch("/api/categories",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))
+                body: JSON.stringify(Object.fromEntries(new FormData(form)))
             });
         if (r.ok) {
-            e.currentTarget.reset();
+            form.reset();
             load(); Swal.fire({ title: "เพิ่มหมวดหมู่แล้ว", icon: "success", timer: 1400, showConfirmButton: false })
         } else Swal.fire({ title: "เพิ่มไม่สำเร็จ", icon: "error" })
     }
@@ -32,6 +35,7 @@ export default function Categories() {
             <input name="code" placeholder="รหัสหมวดหมู่" required />
             <input name="description" placeholder="รายละเอียด" />
             <button className="primary">เพิ่มหมวดหมู่</button>
+            <button type="reset" className="secondary-button">ยกเลิก</button>
         </form>
         <div className="card category-list">
             <div className="card-heading">

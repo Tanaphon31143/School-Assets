@@ -1,0 +1,19 @@
+"use client";
+import { useEffect, useRef } from "react";
+import type { Borrowing } from "@/lib/borrowing-types";
+import { displayStatus, dueText, formatThaiDate, urgency } from "@/lib/borrowing-date";
+import styles from "@/app/borrowings/borrowings.module.css";
+import Swal from "sweetalert2";
+
+export function DetailModal({ item, loading, canManage, onClose, onAction }: { item: Borrowing | null; loading: boolean; canManage: boolean; onClose: () => void; onAction: (action: "approve" | "reject" | "return" | "remind") => void }) {
+  const dialog = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!item) return; const previous = document.activeElement as HTMLElement | null; dialog.current?.focus(); const escape = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); if (e.key === "Tab") { const focusable = dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'); if (!focusable?.length) return; const first = focusable[0], last = focusable[focusable.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } } }; document.addEventListener("keydown", escape); return () => { document.removeEventListener("keydown", escape); previous?.focus(); }; }, [item, onClose]);
+  if (!item) return null; const level = urgency(item); const active = ["approved", "borrowed"].includes(item.status);
+  async function confirm(action: "approve" | "reject" | "return") { const label = action === "approve" ? "อนุมัติคำขอยืม" : action === "return" ? "รับคืนครุภัณฑ์" : "ปฏิเสธคำขอยืม"; const result = await Swal.fire({ icon: action === "reject" ? "warning" : "question", title: `ยืนยันการ${label}หรือไม่?`, showCancelButton: true, confirmButtonText: "ยืนยัน", cancelButtonText: "ยกเลิก", confirmButtonColor: action === "reject" ? "#dc2626" : "#2563eb", reverseButtons: true }); if (result.isConfirmed) onAction(action); }
+  return <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}><section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="borrow-detail-title" tabIndex={-1} ref={dialog}>
+    <div className={styles.modalHeader}><h2 id="borrow-detail-title">รายละเอียดการยืม</h2><button className={styles.close} onClick={onClose} aria-label="ปิดหน้าต่าง">×</button></div>
+    {loading ? <p className={styles.loading}>กำลังโหลดรายละเอียด...</p> : <><div className={styles.assetHero}><div className={styles.assetIcon}>▣</div><div><h3>{item.equipment_name}</h3><p>{item.equipment_code} · {item.location_name || "ไม่ระบุห้องเก็บ"}</p></div><span className={`${styles.badge} ${styles[`badge${level}`]}`}>{level === "overdue" ? "เลยกำหนด" : displayStatus(item.status)}</span></div>
+    <dl className={styles.detailGrid}><div><dt>ผู้ยืม</dt><dd>{item.borrower_name}</dd></div><div><dt>วันที่ยืม</dt><dd>{formatThaiDate(item.borrow_date)}</dd></div><div><dt>กำหนดคืน</dt><dd className={level === "overdue" ? styles.overdueText : ""}>{dueText(item)}</dd></div><div><dt>วัตถุประสงค์การยืม</dt><dd>{item.purpose || "ไม่ระบุ"}</dd></div><div><dt>สภาพครุภัณฑ์ตอนยืม</dt><dd>{item.condition || "สภาพดี"}</dd></div></dl></>}
+    <footer className={styles.modalFooter}>{canManage && level === "overdue" && <button className={styles.remind} onClick={() => onAction("remind")}>แจ้งเตือน</button>}{canManage && item.status === "pending" && <><button className={styles.approve} onClick={() => void confirm("approve")}>อนุมัติ</button><button className={styles.reject} onClick={() => void confirm("reject")}>ปฏิเสธ</button></>}{active && <button className={styles.returnButton} onClick={() => void confirm("return")}>คืนครุภัณฑ์</button>}<button className={styles.detailButton} onClick={onClose}>ปิด</button></footer>
+  </section></div>;
+}

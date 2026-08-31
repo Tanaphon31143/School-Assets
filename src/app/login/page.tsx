@@ -28,15 +28,12 @@ export default function LoginPage() {
       await Swal.fire({
         icon: "success",
         title: "เข้าสู่ระบบสำเร็จ",
-        text: "กำลังนำคุณเข้าสู่ระบบจัดการครุภัณฑ์โรงเรียน",
-        confirmButtonText: "ตกลง",
-        confirmButtonColor: "#2864e8",
-        timer: 2000,
+        text: "กำลังเข้าสู่ระบบจัดการครุภัณฑ์",
+        timer: 850,
         timerProgressBar: true,
+        showConfirmButton: false,
       });
-
-      router.push("/");
-      router.refresh();
+      router.replace("/");
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "เข้าสู่ระบบไม่สำเร็จ";
       Swal.fire({
