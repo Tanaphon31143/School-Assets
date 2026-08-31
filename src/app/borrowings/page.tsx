@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { Toaster, toast } from "sonner";
 import styles from "./borrowings.module.css";
@@ -21,6 +21,80 @@ const fetcher = async <T,>(url: string): Promise<T> => {
 const rank = (i: Borrowing) =>
   ({ overdue: 0, pending: 1, soon: 2, normal: 3, returned: 4 })[urgency(i)] ??
   5;
+
+const statusOptions = [
+  { value: "all", label: "ทุกสถานะ" },
+  { value: "overdue", label: "เลยกำหนด" },
+  { value: "pending", label: "รออนุมัติ" },
+  { value: "borrowed", label: "กำลังยืม" },
+  { value: "returned", label: "คืนแล้ว" },
+];
+
+function StatusFilter({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected =
+    statusOptions.find((option) => option.value === value) ?? statusOptions[0];
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  return (
+    <div className={styles.statusFilter} ref={rootRef}>
+      <button
+        type="button"
+        className={`${styles.filterTrigger} ${open ? styles.filterTriggerOpen : ""}`}
+        onClick={() => setOpen((current) => !current)}
+        role="combobox"
+        aria-label="กรองสถานะ"
+        aria-controls="borrowing-status-options"
+        aria-expanded={open}
+      >
+        <span>{selected.label}</span>
+        <svg
+          className={`${styles.filterChevron} ${open ? styles.filterChevronOpen : ""}`}
+          viewBox="0 0 20 20"
+          aria-hidden="true"
+        >
+          <path d="m5 7.5 5 5 5-5" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          id="borrowing-status-options"
+          className={styles.filterMenu}
+          role="listbox"
+        >
+          {statusOptions.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              className={`${styles.filterOption} ${option.value === value ? styles.filterOptionActive : ""}`}
+              key={option.value}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 export default function BorrowReturnPage() {
   const {
     data: items = [],
@@ -218,17 +292,7 @@ export default function BorrowReturnPage() {
             <p className="sub">เรียงรายการที่ต้องดำเนินการก่อนเสมอ</p>
           </div>
           <div className={styles.filters}>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              aria-label="กรองสถานะ"
-            >
-              <option value="all">ทุกสถานะ</option>
-              <option value="overdue">เลยกำหนด</option>
-              <option value="pending">รออนุมัติ</option>
-              <option value="borrowed">กำลังยืม</option>
-              <option value="returned">คืนแล้ว</option>
-            </select>
+            <StatusFilter value={filter} onChange={setFilter} />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -264,7 +328,13 @@ export default function BorrowReturnPage() {
         }}
         onAction={(a) => selected && runAction(selected, a)}
       />
-      <CreateBorrowRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={() => { void refresh(); }} />
+      <CreateBorrowRequestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          void refresh();
+        }}
+      />
     </main>
   );
 }
